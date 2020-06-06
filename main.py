@@ -18,8 +18,9 @@ mass = [{'область', 'обл.', 'обл'},
         {'строение', 'стр.', 'с.', 'с'},
         {'корп.'},
         {'этаж' 'эт.'},
-        {'помещение', 'офис', 'пом.', 'к.', 'оф.', 'комн', 'ком.', 'ком', 'кв.'},
-        {'офис'}]
+        {'помещение', 'пом.', 'кв.'},
+        {'к.', 'комн', 'ком.', 'ком'},
+        {'офис', 'оф.'}]
 
 tochka = []
 for i in range(len(mass)):
@@ -56,7 +57,7 @@ def c_detector(stroka):
 
 
 def vector(stroka):
-    check = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    check = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     stroka = stroka.split(',')
     out = []
     words = []
@@ -93,6 +94,7 @@ def vector(stroka):
                         if s.startswith(j):
                             out[-1] = i + 1
                             break
+
     for i in range(len(out) - 1):
         if out[i] > 0:
             if i > 0:
@@ -103,8 +105,8 @@ def vector(stroka):
                     out[i + 1] = -2
         if (out[i] > 80) and not (int_or_str(words[i - 1]) or int_or_str(words[i + 1])):
             out[i] = 0
-    #if check[1] == 0:
-    #    vec.add(arr_to_s(out))
+    
+
     return out, words
 
 
@@ -124,52 +126,80 @@ def make_result(arr):
             s = '{} {}'.format(s, words[i])
     return s
 
+def mvec(stroka):
+    stroka = stroka.split()
+    out = ''
+    for s in stroka:
+        pass
+        
 
-def worker(ind, step):
-    global answer
-    print(ind)
-    spisok = []
+
+def worker(ind, step, text):
+    global answer, lock
     out = []
-    count = 0
-    with io.open('bad.csv', encoding='utf-8') as f:
-        s = csv.reader(f, delimiter=';')
-        for row in s:
-            if count % step == ind:
-                if row[0] == 'id':
-                    continue
-                stroka = row[1]
-                stroka = stroka.replace('!', '')
-                stroka = stroka.replace('/', '\\')
-                stroka = stroka.replace('%', '')
-                out.append([row[0], row[1], make_result(vector(stroka))])
-            count+=1
+
+    for s in text:
+        row = s.split(';')
+        stroka = row[1]
+        stroka = stroka.replace('!', '')
+        stroka = stroka.replace('/', '\\')
+        stroka = stroka.replace('%', '')
+        #out.append([row[0], row[1], mvec(stroka)])
+        out.append([row[0], row[1], make_result(vector(stroka))])
+      
     with lock:
-        answer[i] = out
-        print(out)
+        answer[ind] = out
+    return
 
-
-t = time.time()
-
-thr = []
-proc = 10
-answer = []
-for i in range(proc):
-    answer.append([])
 
 lock = threading.Lock()
 
-for i in range(proc):
-    thr.append(threading.Thread(target=worker, args=(i, proc)))
-    thr[-1].start()
 
-print(answer)
+if __name__ == "__main__":
+    tm = time.time()
 
-with io.open('result_Kruassan.csv', "w", encoding='utf-8') as f2:
-    while len(answer[0]) > 0:
-        for i in range(len(answer)):
-            x = answer[i].pop(0)     
-            f2.write("{};{};{}\n".format(x[0], x[1], x[2]))
+    threads = []
 
-print(time.time() - t)
-print('Done!')
+    proc = 30
+    answer = []
+    text = []
+    for i in range(proc):
+        answer.append([])
+        text.append([])
+
+    f = io.open('bad.csv', encoding='utf-8')
+    i = -1
+    for s in f:
+        if i == -1:
+            i = 0
+            continue
+        text[i].append(s)
+        i+=1
+        if i > proc - 1:
+            i = 0
+    f.close()
+    print(time.time() - tm)
+    tm = time.time()
+
+    for i in range(proc):
+        t = threading.Thread(target=worker, args=(i, proc, text[i]))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+
+    print(time.time() - tm)
+    tm = time.time()
+    
+    with io.open('result_Kruassan.csv', "w", encoding='utf-8') as f2:
+        while len(answer[0]) > 0:
+            for i in range(len(answer)):
+                if answer[i] == []:
+                    break
+                x = answer[i].pop(0)
+                f2.write("{};{};{}\n".format(x[0], x[1][:-1], x[2]))
+
+    print(time.time() - tm)
+    print('Done!')
 
