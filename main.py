@@ -3,6 +3,9 @@ import io
 import pickle
 import roman
 import time
+import threading
+
+numbers = '1234567890'
 
 mass = [{'область', 'обл.', 'обл'},
         {'г', 'г.', 'город', 'ст.', 'деревня', 'д.'},
@@ -17,6 +20,7 @@ mass = [{'область', 'обл.', 'обл'},
         {'этаж' 'эт.'},
         {'помещение', 'офис', 'пом.', 'к.', 'оф.', 'комн', 'ком.', 'ком', 'кв.'},
         {'офис'}]
+
 tochka = []
 for i in range(len(mass)):
     tochka.append(set())
@@ -99,15 +103,16 @@ def vector(stroka):
                     out[i + 1] = -2
         if (out[i] > 80) and not (int_or_str(words[i - 1]) or int_or_str(words[i + 1])):
             out[i] = 0
-    if check[1] == 0:
-        vec.add(arr_to_s(out))
+    #if check[1] == 0:
+    #    vec.add(arr_to_s(out))
     return out, words
 
 
 def arr_to_s(arr):
     out = ''
     for i in arr:
-        out = '{}.{}.'.format(out, str(i))
+        if i != 0:
+            out = '{}.{}'.format(out, str(i))
     return out
 
 
@@ -120,24 +125,50 @@ def make_result(arr):
     return s
 
 
-t = time.time()
-answer = set()
-spisok = []
-numbers = '1234567890'
-
-with io.open('bad.csv', encoding='utf-8') as f:
-    s = csv.reader(f, delimiter=';')
-    with io.open('result_Kruassan.csv', "w", encoding='utf-8') as f2:
+def worker(ind, step):
+    global answer
+    print(ind)
+    spisok = []
+    out = []
+    count = 0
+    with io.open('bad.csv', encoding='utf-8') as f:
+        s = csv.reader(f, delimiter=';')
         for row in s:
-            if row[0] == 'id':
-                continue
-            stroka = row[1]
-            stroka = stroka.replace('!', '')
-            stroka = stroka.replace('/', '\\')
-            stroka = stroka.replace('%', '')
-            f2.write("{};{};{}\n".format(row[0], row[1], make_result(vector(stroka))))
-            #print([row[0], row[1], make_result(vector(stroka))])
-print(vec)
+            if count % step == ind:
+                if row[0] == 'id':
+                    continue
+                stroka = row[1]
+                stroka = stroka.replace('!', '')
+                stroka = stroka.replace('/', '\\')
+                stroka = stroka.replace('%', '')
+                out.append([row[0], row[1], make_result(vector(stroka))])
+            count+=1
+    with lock:
+        answer[i] = out
+        print(out)
+
+
+t = time.time()
+
+thr = []
+proc = 10
+answer = []
+for i in range(proc):
+    answer.append([])
+
+lock = threading.Lock()
+
+for i in range(proc):
+    thr.append(threading.Thread(target=worker, args=(i, proc)))
+    thr[-1].start()
+
+print(answer)
+
+with io.open('result_Kruassan.csv', "w", encoding='utf-8') as f2:
+    while len(answer[0]) > 0:
+        for i in range(len(answer)):
+            x = answer[i].pop(0)     
+            f2.write("{};{};{}\n".format(x[0], x[1], x[2]))
 
 print(time.time() - t)
 print('Done!')
