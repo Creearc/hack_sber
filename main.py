@@ -4,13 +4,13 @@ import pickle
 import roman
 import time
 
-check = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 mass = [{'область', 'обл.', 'обл'},
         {'г', 'г.', 'город', 'ст.', 'деревня', 'д.'},
         {'пос'},
         {'район', 'р-он', 'р-н.', 'р-н', 'м.', 'округ'},
         {'метро'},
-        {'улица', 'пр-кт', 'пр-кт.', 'пер', 'пер.', 'ул.', 'ш.', 'ул', 'ш ', 'шоссе', 'проезд'},
+        {'улица', 'пр-кт', 'пр-кт.', 'ул.', 'ш.', 'ул', 'ш ', 'шоссе', 'проезд'},
+        {'переулок', 'пер', 'пер.'},
         {'дом', 'д', 'д.'},
         {'строение', 'стр.', 'с.', 'с'},
         {'корп.'},
@@ -27,6 +27,7 @@ for i in range(len(mass)):
             tochka[i].add(j)
 viktor = {'i', 'v', 'x', 'l', 'c', 'd', 'm'}
 
+vec = set()
 
 def rome():
     words[-1] = roman.fromRoman(s.upper())
@@ -35,6 +36,7 @@ def rome():
 
 
 def int_or_str(stroka):
+    stroka = str(stroka)
     if stroka.isdigit() and not stroka.isalpha():
         return True
     else:
@@ -50,6 +52,7 @@ def c_detector(stroka):
 
 
 def vector(stroka):
+    check = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     stroka = stroka.split(',')
     out = []
     words = []
@@ -94,10 +97,18 @@ def vector(stroka):
             if i < len(out):
                 if out[i + 1] == 0:
                     out[i + 1] = -2
-        else:
-            if (out[i] > 50) and not (int_or_str(words[i - 1]) or int_or_str(words[i + 1])):
-                out[i] = 0
+        if (out[i] > 80) and not (int_or_str(words[i - 1]) or int_or_str(words[i + 1])):
+            out[i] = 0
+    if check[1] == 0:
+        vec.add(arr_to_s(out))
     return out, words
+
+
+def arr_to_s(arr):
+    out = ''
+    for i in arr:
+        out = '{}.{}.'.format(out, str(i))
+    return out
 
 
 def make_result(arr):
@@ -113,6 +124,7 @@ t = time.time()
 answer = set()
 spisok = []
 numbers = '1234567890'
+
 with io.open('bad.csv', encoding='utf-8') as f:
     s = csv.reader(f, delimiter=';')
     with io.open('result_Kruassan.csv', "w", encoding='utf-8') as f2:
@@ -125,6 +137,7 @@ with io.open('bad.csv', encoding='utf-8') as f:
             stroka = stroka.replace('%', '')
             f2.write("{};{};{}\n".format(row[0], row[1], make_result(vector(stroka))))
             #print([row[0], row[1], make_result(vector(stroka))])
+print(vec)
 
 print(time.time() - t)
 print('Done!')
