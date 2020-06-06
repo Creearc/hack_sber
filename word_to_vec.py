@@ -25,6 +25,14 @@ s = "Коломна"
 i = a(s)
 print(i, arr[0][i-1])
 
+s = "Пермь"
+i = a(s)
+print(i, arr[0][i-1])
+
+s = "Москва"
+i = a(s)
+print(i, arr[0][i-1])
+
 
 with open("vitya.dat", 'rb') as f:
   v = pickle.load(f)
