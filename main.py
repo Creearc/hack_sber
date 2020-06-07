@@ -1,4 +1,4 @@
-import csv
+
 import io
 import pickle
 import roman
@@ -124,14 +124,7 @@ def make_result(arr):
     for i in range(len(out)):
         if out[i] != 0:
             s = '{} {}'.format(s, words[i])
-    return s
-
-def mvec(stroka):
-    stroka = stroka.split()
-    out = ''
-    for s in stroka:
-        pass
-        
+    return s      
 
 
 def worker(ind, step, text):
@@ -144,7 +137,6 @@ def worker(ind, step, text):
         stroka = stroka.replace('!', '')
         stroka = stroka.replace('/', '\\')
         stroka = stroka.replace('%', '')
-        #out.append([row[0], row[1], mvec(stroka)])
         out.append([row[0], row[1], make_result(vector(stroka))])
       
     with lock:
